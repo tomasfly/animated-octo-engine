@@ -37,15 +37,17 @@ async function buy(usdt, symbol) {
         currencyPrice = response;
         // convert the usdt amount I want to buy to symbol price
         currencyQuantityToBuy = getBuyQuantity(usdt, currencyPrice)
+        logger.info(`Trying to buy ${currencyQuantityToBuy} of sy mbol ${symbol}`)
         try {
             // place a market buy order 
-            await binance.marketBuy(symbol, currencyQuantityToBuy).then((response) => {
+            await binance.marketBuy(symbol, parseFloat(currencyQuantityToBuy).toPrecision(3)).then((response) => {
                 logger.info(JSON.stringify(response, null, 2))
                 isBuyInProgress = false
             })
         }
         catch (e) {
             logger.error(`Error trying to buy currency ${e}`)
+            logger.error(JSON.stringify(e))
             isBuyInProgress = false
         }
     })
@@ -58,15 +60,14 @@ async function sellAllBalance(symbol) {
         binance.balance(async (error, balances) => {
             if (error) return console.error(error);
             //Removing 'USDT' part of the symbol
-            balanceToSell = balances[symbol.replace('USDT','')].available
+            balanceToSell = balances[symbol.replace('USDT', '')].available
             logger.info(`Balance is:${balanceToSell}`)
             try {
+                logger.info(`Balance to sell is${balanceToSell} and type of ${typeof balanceToSell}`)
                 finalBalanceSell = parseFloat(balanceToSell)
-                balanceLessDecimals = finalBalanceSell.toFixed(3)
-                // Setting toFixed to avoid Filter failure: LOT_SIZE\ When trying to sell
-                // Sell all the balance and convert it to USDT. Triggered when there is a sell signal
-                logger.info(`Attempting to sell :${balanceLessDecimals}`)
-                await binance.marketSell(symbol, balanceLessDecimals).then((response) => {
+                sellAmountWithCommission = finalBalanceSell - (finalBalanceSell / 1000)
+                logger.info(`Selling ${finalBalanceSell}`)
+                await binance.marketSell(symbol, sellAmountWithCommission.toPrecision(4)).then((response) => {
                     logger.info(JSON.stringify(response, null, 2))
                     isSellInProgress = false
                 })
@@ -104,7 +105,7 @@ async function executeSell(symbol) {
 
 // executeBuy(100,'BTC')
 //executeSell('BTC')
-module.exports = {executeBuy,executeSell}
+module.exports = { executeBuy, executeSell }
 
 
 
