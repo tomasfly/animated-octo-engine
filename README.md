@@ -1,4 +1,4 @@
-# animated-octo-engine
+# Tradingview + Binance example
 
 Tradingview alerts handling to buy cryptos with Binance API.
 
